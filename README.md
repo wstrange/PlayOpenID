@@ -1,4 +1,3 @@
-
 This is a small Play! example that demonstrates using OpenID login. 
 
 It is based on the OpenID Play! docs - but is a complete example
