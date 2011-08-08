@@ -1,0 +1,15 @@
+#{extends 'main.html' /}
+#{set title:'Home' /}
+
+<h1>Demo OpenId App</h1>
+
+#{if id}
+	<p>User verified and logged in</p>
+	<p> User openid identifier is  ${id} </p>
+	<p> User email is ${email}</p>
+	<p> Retrieved user object from database: ${user}</p>
+#{/if}
+
+<br/>
+
+<a href="/logout">Logout<a>
