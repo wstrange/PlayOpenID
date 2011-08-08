@@ -9,16 +9,22 @@ import java.util.*;
 
 import models.*;
 
+/**
+ * Sample Play! Application that shows OpenId login.
+ * 
+ * Mostly based on the documentation -but a little more complete
+ * 
+ * @author warren.strange@gmail.com
+ *
+ */
+
 public class Application extends Controller {
 
-	public static void welcome() {
-		render();
-	}
-
 	/**
-	 * Checks to see if the user is authenticated The @Before annotation marks
-	 * this as an intercepter. The unless= means that that login and
-	 * authenticate methods will not be intercepted
+	 * Checks to see if the user is authenticated 
+	 * The @Before annotation marks
+	 * this as an intercepter which is called before every action on
+	 * this controller. The unless= actions are the exception (will not be intercepted).
 	 */
 	@Before(unless = { "login", "authenticate" })
 	static void checkAuthenticated() {
@@ -55,7 +61,7 @@ public class Application extends Controller {
 
 	/**
 	 * This method gets mapped to any action (GET,POST) on /authenticate
-	 * It is called initially to make the OpenId request. The user will
+	 * It is initially called to make the OpenId request. The user will
 	 * be redirected to the provider, and after they authenticate (or fail to authenticate) 
 	 * the provider will redirect them back to this method with the results.
 	 * 
@@ -69,10 +75,8 @@ public class Application extends Controller {
 			if (info == null) {
 				flash.put("error", "Oops. Authentication has failed");
 				login();
-			}
-					
+			}			
 			Map<String, String> ext = info.extensions;
-			System.out.println("Extensions=" + ext + " size=" + ext.size());
 			String email = ext.get("email");
 			if( email == null ) {
 				flash.put("error", "You must provide an email address!");
@@ -89,33 +93,32 @@ public class Application extends Controller {
 			else {
 				Logger.info("Creating new user");
 				user = new User(email);
-			
-				// TODO: create new openid entry
 			}
-			// update user
+			// update user attributes - they may have changed
+			// TODO: We should really only set most of these on an initial create, or let
+			// the user choose to set them
 			user.firstname = ext.get("firstname");
 			user.lastname = ext.get("lastname");
 			user.language = ext.get("language");
 			
 			Logger.info("Saving user u=" + user.save());
-			
-			
+				
 			session.put("user.openid", info.id);
 			session.put("user.email", email);
 			
-			index();
+			index();  // render index page
 		} else {
-			Logger.info("Creatng OpenID request=" + url);
+			Logger.info("Creating OpenID request=" + url);
 			OpenID oi = OpenID.id(url);
-			// The list extension attributes that are mandatory
+			// The list extension attributes that are mandatory 
 			oi.required("email","http://axschema.org/contact/email");
 			// The list of attributes that are optional
 			// NOTE: When these are made optional Google Does not pass them on or ask for them
-			// They have been set to required
+			// They have been set to required for the demo
 			oi.required("firstname","http://axschema.org/namePerson/first");
 			oi.required("lastname", "http://axschema.org/namePerson/last");
 			oi.required("language", "http://axschema.org/pref/language");
-			// This will result in a redirect to the OpenID provider
+			// The veryify() call will result in a redirect to the OpenID provider
 			if (!oi.verify()) {
 				flash.error("secure.error.openidverifyfailed");
 				login();
