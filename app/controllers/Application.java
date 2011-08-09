@@ -19,6 +19,10 @@ import models.*;
  */
 
 public class Application extends Controller {
+	
+	
+	
+	
 
 	/**
 	 * Checks to see if the user is authenticated 
@@ -26,20 +30,22 @@ public class Application extends Controller {
 	 * this as an intercepter which is called before every action on
 	 * this controller. The unless= actions are the exception (will not be intercepted).
 	 */
-	@Before(unless = { "login", "authenticate" })
+	@Before(unless = { "login", "authenticate"})
 	static void checkAuthenticated() {
 		Logger.info("checkAuthenticated");
 		if (!session.contains("user.openid")) {
 			login();
 		}
 	}
+	
 
 	public static void index() {
-		String id = session.get("user.openid");
-		String email = session.get("user.email");
-		User user = User.find("byEmail", email).first();
-		render(id,email,user);
+		String id = session.get("user.openid");	
+		User user = User.find("byOpenid", id).first();
+		render(id,user);
 	}
+	
+	
 
 	/**
 	 * Render the login page. Displays the openid login form. 
@@ -55,7 +61,6 @@ public class Application extends Controller {
 	 */
 	public static void logout() {
 		session.remove("user.openid");
-		session.remove("user.email");
 		login();
 	}
 
@@ -65,9 +70,9 @@ public class Application extends Controller {
 	 * be redirected to the provider, and after they authenticate (or fail to authenticate) 
 	 * the provider will redirect them back to this method with the results.
 	 * 
-	 * @param url - the openid url of the provider
+	 * @param openid_identifier - the openid url of the provider
 	 */
-	public static void authenticate(String url) {
+	public static void authenticate(String openid_identifier) {
 		
 		// is the request a response back from the Provider?
 		if (OpenID.isAuthenticationResponse()) {
@@ -76,14 +81,8 @@ public class Application extends Controller {
 				flash.put("error", "Oops. Authentication has failed");
 				login();
 			}			
-			Map<String, String> ext = info.extensions;
-			String email = ext.get("email");
-			if( email == null ) {
-				flash.put("error", "You must provide an email address!");
-				login();
-			}
 			
-			User user = User.find("byEmail", email).first();
+			User user = User.find("byOpenid", info.id).first();
 			
 			if (user != null) {
 				Logger.info("Existing User found! User=" + user);
@@ -92,11 +91,13 @@ public class Application extends Controller {
 			// Create new user if none exists
 			else {
 				Logger.info("Creating new user");
-				user = new User(email);
+				user = new User(info.id);
 			}
 			// update user attributes - they may have changed
 			// TODO: We should really only set most of these on an initial create, or let
 			// the user choose to set them
+			Map<String, String> ext = info.extensions;
+			user.email = ext.get("email");	
 			user.firstname = ext.get("firstname");
 			user.lastname = ext.get("lastname");
 			user.language = ext.get("language");
@@ -104,12 +105,13 @@ public class Application extends Controller {
 			Logger.info("Saving user u=" + user.save());
 				
 			session.put("user.openid", info.id);
-			session.put("user.email", email);
 			
 			index();  // render index page
 		} else {
-			Logger.info("Creating OpenID request=" + url);
-			OpenID oi = OpenID.id(url);
+			Logger.info("Creating OpenID request openid=" + openid_identifier);
+			
+			OpenID oi = OpenID.id(openid_identifier);
+		
 			// The list extension attributes that are mandatory 
 			oi.required("email","http://axschema.org/contact/email");
 			// The list of attributes that are optional

@@ -11,7 +11,7 @@ import play.db.jpa.GenericModel.JPAQuery;
 @Entity
 public class User extends Model {
 
-	@Required
+	public String openid;
 	public String email;
 	public String password;
 	public String fullname;
@@ -26,12 +26,12 @@ public class User extends Model {
 		this.fullname = fullname;
 	}
 
-	public User(String email) {
-		this.email = email;
+	public User(String openid) {
+		this.openid = openid;
 	}
 	
 	public String toString() {
-		return "user id=" + this.id + " name=" + firstname + " " + lastname 
+		return "user id=" + this.id + " openid= " + openid + "\nname=" + firstname + " " + lastname 
 			+ " language=" + language + " email=" + email;
 	}
 

@@ -8,6 +8,7 @@ GET		/welcome								Application.welcome
 GET		/login									Application.login
 GET		/logout									Application.logout
 *		/authenticate							Application.authenticate
+*		/delegate								Application.delegate
 
 
 # Ignore favicon requests
